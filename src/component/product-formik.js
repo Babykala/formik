@@ -7,6 +7,7 @@ export default function Product() {
     const [field, setField] = useState({
         user:[],
     })
+    const [formvalues,setFormvalues]=useState({});
     const initialValue = {
         id:'',
         productId: '',
@@ -22,11 +23,19 @@ export default function Product() {
         if (formData.price === '') errors.price = 'Price is Required';
         return errors;
     };
-    const handleSubmit = async (formData,resetForm) => {
+    const onPopulateData=async (id)=>{
+        const selectedData=field.user.filter((data)=>data.id==id)[0];
+        await setFormvalues({
+        id:selectedData.id,
+        productId:selectedData.productId,
+        productName:selectedData.productName,
+        price:selectedData.price,})
+    }
+    const handleSubmit = async (formData) => {
 
-        if(field.user.id){
+        if(formvalues.id){
             //Update
-            var res=await axios.put(`https://6249738f831c69c687cde72c.mockapi.io/product/${field.user.id}`,
+            var res=await axios.put(`https://6249738f831c69c687cde72c.mockapi.io/product/${formvalues.id}`,
                 {productId:formData.productId,
                 productName:formData.productName,
                 price:formData.price,});
@@ -34,8 +43,12 @@ export default function Product() {
             var index=field.user.findIndex(row=>row.id==res.data.id);
             var user=[...field.user]
             user[index]=res.data;
-            await setField({user,productId:'',productName:'',price:'',id:''})
+            await setField({user})
             
+            formData.productId='';
+            formData.productName='';
+            formData.price='';  
+            await setFormvalues({});
         }
         else{
             //create
@@ -43,20 +56,20 @@ export default function Product() {
             {productId:formData.productId,
              productName:formData.productName,
              price:formData.price,});
-                
-            //console.log(res)
+            
             var user=[...field.user]
             user.push(res.data);
             await setField({user})
-            //await resetForm();
+            formData.productId='';
+            formData.productName='';
+            formData.price='';
+           
         }
         
     };
     const handleDelete= async (id)=>{
-        console.log(id,field.user)
         await axios.delete(`https://6249738f831c69c687cde72c.mockapi.io/product/${id}`)
         var user=field.user.filter((row)=>row.id!=id)
-        console.log(user)
         setField({user})
     }
 
@@ -67,25 +80,15 @@ export default function Product() {
         console.log(field.user);
     }, []);
 
-    const onPopulateData=(id)=>{
-        const selectedData=field.user.filter((row)=>row.id==id)[0];
-        
-        // formData.productId=selectedData.productId;
-        // formData.productName=selectedData.productName;
-        // formData.price=selectedData.price;
-        // formData.id=selectedData.id;
-        
-        console.log(initialValue)    
-    }
-
     return (
         <div style={{ padding: '15px', margin: '15px' }}>
-            <div>
-                <h3> Product Form using Formik </h3><br /><br />
+            <div style={{border:'solid 1px black',width:'50%',borderRadius:'5px',padding:'10px'}}>
+                <h3 style={{color:'red',textAlign:'center'}}> Product Form using Formik </h3><br /><br />
                 <Formik
-                    initialValues={initialValue}
+                    initialValues={formvalues || initialValue}
                     validate={(formData) => validate(formData)}
                     onSubmit={(formData) => handleSubmit(formData)}
+                    enableReinitialize
                 >
                     {({
                         values,
@@ -97,22 +100,7 @@ export default function Product() {
                         isSubmitting,
                         /* and other goodies */
                     }) => (
-                        <form onSubmit={(values,{resetForm})=>handleSubmit(values,resetForm)}>
-                            <div>
-                                <label> S.No.: </label>&nbsp;
-                                <input
-                                    type="text"
-                                    name="id"
-                                    value={values.id}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                />
-                                <br />
-                                <span style={{ color: 'red' }}>
-                                    {touched.id && errors.id}
-                                </span>
-                            </div>
-                            <br />
+                        <form onSubmit={handleSubmit}>
                             <div>
                                 <label> Product ID: </label>&nbsp;
                                 <input
@@ -158,12 +146,12 @@ export default function Product() {
                                 </span>
                             </div>
                             <br />
-                            <div>
+                            <div style={{textAlign:'center'}}>
                                 <button type="submit" disabled={isSubmitting}>
                                     Submit
                                 </button>
-                                &nbsp;
-                                <button type="button"> Reset </button>&nbsp;
+                                &nbsp;&nbsp;
+                                
                             </div>
                         </form>
                     )}
@@ -195,13 +183,11 @@ export default function Product() {
                                 <button onClick={()=>handleDelete(row.id)}>Delete</button></td>
                             </tr>
                             )
-                            
+  
                         }))}
                     </tbody>
                 </table>
             </div>
         </div>
-
-
     )
 }
