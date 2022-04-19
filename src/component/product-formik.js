@@ -31,8 +31,7 @@ export default function Product() {
         productName:selectedData.productName,
         price:selectedData.price,})
     }
-    const handleSubmit = async (formData) => {
-
+    const handleSubmit = async (formData,{resetForm}) => {
         if(formvalues.id){
             //Update
             var res=await axios.put(`https://6249738f831c69c687cde72c.mockapi.io/product/${formvalues.id}`,
@@ -44,11 +43,11 @@ export default function Product() {
             var user=[...field.user]
             user[index]=res.data;
             await setField({user})
-            
-            formData.productId='';
-            formData.productName='';
-            formData.price='';  
+            //formData='';
+            formData.productId='';formData.productName='';formData.price='';formData.id=''; 
             await setFormvalues({});
+            resetForm();
+                       
         }
         else{
             //create
@@ -60,9 +59,9 @@ export default function Product() {
             var user=[...field.user]
             user.push(res.data);
             await setField({user})
-            formData.productId='';
-            formData.productName='';
-            formData.price='';
+            formData.productId='';formData.productName='';formData.price='';
+            await setFormvalues({});
+            resetForm({});
            
         }
         
@@ -87,7 +86,7 @@ export default function Product() {
                 <Formik
                     initialValues={formvalues || initialValue}
                     validate={(formData) => validate(formData)}
-                    onSubmit={(formData) => handleSubmit(formData)}
+                    onSubmit={(formData,{resetForm}) => handleSubmit(formData,{resetForm})}
                     enableReinitialize
                 >
                     {({
@@ -98,6 +97,7 @@ export default function Product() {
                         handleBlur,
                         handleSubmit,
                         isSubmitting,
+                        resetForm
                         /* and other goodies */
                     }) => (
                         <form onSubmit={handleSubmit}>
@@ -149,7 +149,8 @@ export default function Product() {
                             <div style={{textAlign:'center'}}>
                                 <button type="submit" disabled={isSubmitting}>
                                     Submit
-                                </button>
+                                </button> &nbsp;&nbsp;
+                                <button type="reset" onClick={resetForm}>Reset</button>
                                 &nbsp;&nbsp;
                                 
                             </div>
@@ -174,7 +175,7 @@ export default function Product() {
                     <tbody>
                         {field.user.map((row=>{
                            return(
-                                <tr>
+                                <tr key={row.id}>
                                 <td>{row.id}</td>
                                 <td>{row.productId}</td>
                                 <td>{row.productName}</td>
